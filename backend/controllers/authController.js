@@ -18,7 +18,9 @@ const sendOtpEmail = async (email, otp, label = "OTP Verification") => {
     from: process.env.EMAIL_USER,
     to: email,
     subject: `TrackEx: ${label}`,
-    text: `<h1>Greetings from TrackEx. Your OTP is ${otp}</h1>`,
+    html: `<div><p>Your One-Time Password (OTP) is: <b>${otp}</b></p>
+           <p>This OTP is valid for 1 minute. If you did not request this, please ignore this email.</p>
+           <p>Thank you,<br/>TrackEx Team</p></div>`,
   });
 };
 
