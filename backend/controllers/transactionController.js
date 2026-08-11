@@ -1,9 +1,62 @@
 const Transaction = require("../models/Transaction");
+const mongoose = require("mongoose");
 const path = require("path");
 const fs = require("fs");
+const { Readable } = require("stream");
 
 // Get user ID from JWT (or fallback to session if needed)
 const getUserId = (req) => req.user?.id; // || req.session?.user?.id;
+
+const getReceiptBucket = () =>
+  new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+    bucketName: "receipts",
+  });
+
+const toObjectId = (value) => {
+  try {
+    return new mongoose.Types.ObjectId(value);
+  } catch (_) {
+    return null;
+  }
+};
+
+const uploadReceiptToGridFS = (file) =>
+  new Promise((resolve, reject) => {
+    const bucket = getReceiptBucket();
+    const uploadStream = bucket.openUploadStream(file.originalname, {
+      contentType: file.mimetype,
+      metadata: {
+        originalName: file.originalname,
+        size: file.size,
+      },
+    });
+
+    uploadStream.on("error", reject);
+    uploadStream.on("finish", () => resolve(uploadStream.id.toString()));
+    Readable.from([file.buffer]).pipe(uploadStream);
+  });
+
+const deleteStoredReceipt = async (receipt) => {
+  if (receipt?.fileId) {
+    const objectId = toObjectId(receipt.fileId);
+    if (objectId) {
+      const bucket = getReceiptBucket();
+      try {
+        await bucket.delete(objectId);
+      } catch (error) {
+        if (error?.codeName !== "FileNotFound" && error?.code !== 26) {
+          throw error;
+        }
+      }
+      return;
+    }
+  }
+
+  if (receipt?.path) {
+    const filePath = path.join(__dirname, "..", receipt.path);
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  }
+};
 
 const findOwnedTransaction = async (id, userId) => {
   const transaction = await Transaction.findById(id);
@@ -67,11 +120,17 @@ exports.createTransaction = async (req, res) => {
       return res.status(400).json({ message: "Invalid transaction type" });
     }
 
-    const receipts = (req.files || []).map((file) => ({
-      name: file.originalname,
-      size: file.size,
-      path: `uploads/${file.filename}`,
-    }));
+    const receipts = await Promise.all(
+      (req.files || []).map(async (file) => {
+        const fileId = await uploadReceiptToGridFS(file);
+        return {
+          name: file.originalname,
+          size: file.size,
+          mimeType: file.mimetype,
+          fileId,
+        };
+      })
+    );
 
     const transaction = new Transaction({
       userId,
@@ -147,23 +206,33 @@ exports.updateTransaction = async (req, res) => {
       }
       if (!Array.isArray(idsToRemove)) idsToRemove = [idsToRemove];
 
+      const receiptsToRemove = transaction.receipts.filter((r) => {
+        const idStr = r._id?.toString?.() || r._id;
+        return idsToRemove.includes(idStr);
+      });
+
+      for (const receipt of receiptsToRemove) {
+        await deleteStoredReceipt(receipt);
+      }
+
       transaction.receipts = transaction.receipts.filter((r) => {
         const idStr = r._id?.toString?.() || r._id;
-        if (idsToRemove.includes(idStr)) {
-          const filePath = path.join(__dirname, "..", r.path);
-          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-          return false;
-        }
-        return true;
+        return !idsToRemove.includes(idStr);
       });
     }
 
     if (req.files?.length) {
-      const newReceipts = req.files.map((file) => ({
-        name: file.originalname,
-        path: `uploads/${file.filename}`,
-        size: file.size,
-      }));
+      const newReceipts = await Promise.all(
+        req.files.map(async (file) => {
+          const fileId = await uploadReceiptToGridFS(file);
+          return {
+            name: file.originalname,
+            size: file.size,
+            mimeType: file.mimetype,
+            fileId,
+          };
+        })
+      );
       transaction.receipts.push(...newReceipts);
     }
 
@@ -190,10 +259,9 @@ exports.deleteTransaction = async (req, res) => {
     const { transaction, error } = await findOwnedTransaction(id, userId);
     if (error) return res.status(error.status).json({ message: error.message });
 
-    transaction.receipts.forEach((r) => {
-      const filePath = path.join(__dirname, "..", r.path);
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    });
+    for (const receipt of transaction.receipts) {
+      await deleteStoredReceipt(receipt);
+    }
 
     await Transaction.findByIdAndDelete(id);
 
@@ -260,6 +328,33 @@ exports.downloadReceipt = async (req, res) => {
       (r) => r._id?.toString?.() === receiptId || r._id === receiptId
     );
     if (!receipt) return res.status(404).json({ message: "Receipt not found" });
+
+    if (receipt.fileId) {
+      const objectId = toObjectId(receipt.fileId);
+      if (!objectId) {
+        return res.status(404).json({ message: "File not found" });
+      }
+
+      const bucket = getReceiptBucket();
+      res.setHeader(
+        "Content-Type",
+        receipt.mimeType || "application/octet-stream"
+      );
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${receipt.name || "receipt"}"`
+      );
+
+      const downloadStream = bucket.openDownloadStream(objectId);
+      downloadStream.on("error", () => {
+        if (!res.headersSent) {
+          res.status(404).json({ message: "File not found" });
+        } else {
+          res.destroy();
+        }
+      });
+      return downloadStream.pipe(res);
+    }
 
     const filePath = path.join(__dirname, "..", receipt.path || "");
     if (!fs.existsSync(filePath)) {

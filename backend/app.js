@@ -2,7 +2,6 @@ const envFile = process.env.NODE_ENV === "production" ? ".env.production" : ".en
 require("dotenv").config({ path: envFile });
 
 const express = require("express");
-const path = require("path");
 // const session = require("express-session");
 const cors = require("cors");
 const connectDB = require("./config/db");
@@ -25,10 +24,13 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(
-  "/uploads",
-  express.static(path.join(__dirname, "..", "uploads"))
-);
+if (process.env.NODE_ENV !== "production") {
+  const path = require("path");
+  app.use(
+    "/uploads",
+    express.static(path.join(__dirname, "..", "uploads"))
+  );
+}
 
 // app.use(
 //   session({
@@ -44,6 +46,10 @@ app.use(
 
 app.get("/", (req, res) => {
   res.send("Expense Tracker API is running");
+});
+
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok" });
 });
 
 app.use("/api/auth", require("./routes/authRoutes"));

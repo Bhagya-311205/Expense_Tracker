@@ -4,6 +4,13 @@ const { transporter } = require("../config/email");
 const { generateToken } = require("../middleware/jwtAuthMiddleware");
 
 const OTP_EXPIRY_MS = 60 * 1000;
+const isProduction = process.env.NODE_ENV === "production";
+const authCookieOptions = {
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? "none" : "strict",
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+};
 
 const generateOTP = () => crypto.randomInt(100000, 999999).toString();
 
@@ -100,10 +107,7 @@ exports.verifyOTP = async (req, res) => {
     const token = generateToken(formatUser(user));
     res
       .cookie("token", token, {
-        httpOnly: true,        // JavaScript can't access it (XSS protection)
-        secure: process.env.NODE_ENV === "production", // HTTPS only in production
-        sameSite: "strict",    // CSRF protection
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        ...authCookieOptions,
       })
       .json({ message: "Login successful", user: formatUser(user) });
   } catch (error) {
@@ -192,8 +196,8 @@ exports.logout = (req, res) => {
   res
     .clearCookie("token", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "strict",
     })
     .json({ message: "Logout successful" });
 };

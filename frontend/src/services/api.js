@@ -1,13 +1,15 @@
 import axios from "axios";
 
+const baseURL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+
 const api = axios.create({
-  baseURL: "http://localhost:3000/api",
+  baseURL,
   withCredentials: true, // Automatically send cookies with requests
 });
 
 // localStorage method (commented out - using httpOnly cookies instead)
 // const api_localStorage = axios.create({
-//   baseURL: "http://localhost:3000/api",
+//   baseURL,
 //   withCredentials: true,
 // });
 

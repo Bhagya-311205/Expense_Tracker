@@ -40,6 +40,8 @@ const transactionSchema = new mongoose.Schema(
       {
         name: String,
         size: Number,
+        mimeType: String,
+        fileId: String,
         path: String,
       },
     ],
