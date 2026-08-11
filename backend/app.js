@@ -12,11 +12,31 @@ const app = express();
 
 // const sessionSecret = process.env.SESSION_SECRET;
 
-const FRONTEND_URL = process.env.FRONTEND_URL;
+const FRONTEND_URL = (process.env.FRONTEND_URL || "").replace(/\/+$/, "");
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || FRONTEND_URL)
+  .split(",")
+  .map((origin) => origin.trim().replace(/\/+$/, ""))
+  .filter(Boolean);
+
+const corsOriginHandler = (origin, callback) => {
+  // Allow non-browser requests (no Origin header).
+  if (!origin) return callback(null, true);
+
+  const normalizedOrigin = origin.replace(/\/+$/, "");
+
+  // If no origins are configured, allow all to avoid accidental lockout.
+  if (ALLOWED_ORIGINS.length === 0) return callback(null, true);
+
+  if (ALLOWED_ORIGINS.includes(normalizedOrigin)) {
+    return callback(null, true);
+  }
+
+  return callback(new Error(`CORS blocked for origin: ${origin}`));
+};
+
 app.use(
   cors({
-    // If FRONTEND_URL is provided use it; otherwise reflect request origin to allow hosted frontend.
-    origin: FRONTEND_URL || true,
+    origin: corsOriginHandler,
     credentials: true,
   })
 );
