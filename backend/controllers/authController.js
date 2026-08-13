@@ -20,28 +20,20 @@ const formatUser = (user) => ({
   name: user.name,
 });
 
-// TEMPORARY: Skip email sending entirely for testing
 const sendOtpEmail = async (email, otp, label = "OTP Verification") => {
-  try {
-    console.log(`[TEMP] Skipping email send to ${email}`);
-    console.log(`[TEMP] OTP for testing: ${otp}`);
-    // Don't actually send email — just log it
-    // This lets you test signup/login flow without email setup
-  } catch (error) {
-    console.error("Error in sendOtpEmail:", error.message);
-  }
+  await transporter.sendMail({
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: `TrackEx: ${label}`,
+    html: `<div><p>Your One-Time Password (OTP) is: <b>${otp}</b></p>
+           <p>This OTP is valid for 1 minute. If you did not request this, please ignore this email.</p>
+           <p>Thank you,<br/>TrackEx Team</p></div>`,
+  });
 };
 
 exports.signUp = async (req, res) => {
   try {
-    console.log("signUp request received for:", req.body.email);
     const { name, email, password } = req.body;
-
-    if (!name || !email || !password) {
-      return res.status(400).json({ 
-        message: "Missing required fields: name, email, password" 
-      });
-    }
 
     const existingUser = await User.findOne({ email });
 
@@ -55,14 +47,10 @@ exports.signUp = async (req, res) => {
         existingUser.otpExpiry = new Date(Date.now() + OTP_EXPIRY_MS);
 
         await existingUser.save();
-        
-        sendOtpEmail(email, otp, "OTP Verification for Creating Account").catch(err =>
-          console.error("Email send failed:", err.message)
-        );
+        await sendOtpEmail(email, otp, "OTP Verification for Creating Account");
 
         return res.status(200).json({
           message: "Details updated. Please verify OTP sent to email.",
-          otp: otp // TEMPORARY: Return OTP for testing (remove in production)
         });
       }
       return res.status(409).json({
@@ -77,48 +65,29 @@ exports.signUp = async (req, res) => {
 
     await user.save();
 
-    sendOtpEmail(email, otp, "OTP Verification for Creating Account").catch(err =>
-      console.error("Email send failed:", err.message)
-    );
+    await sendOtpEmail(email, otp, "OTP Verification for Creating Account");
 
-    console.log(`✅ User registered: ${email}, OTP: ${otp}`);
-    
-    res.status(201).json({ 
-      message: "User registered. Please verify OTP sent to email.",
-      otp: otp // TEMPORARY: Return OTP for testing (remove in production)
-    });
+    res
+      .status(201)
+      .json({ message: "User registered. Please verify OTP sent to email." });
   } catch (error) {
-    console.error("signUp error:", error.message);
-    res.status(500).json({ 
-      message: "Error registering user", 
-      error: error.message 
-    });
+    res
+      .status(500)
+      .json({ message: "Error registering user", error: error.message });
   }
 };
 
 exports.verifyOTP = async (req, res) => {
   try {
-    console.log("verifyOTP request received");
     const { email, otp } = req.body;
-
-    if (!email || !otp) {
-      return res.status(400).json({ 
-        message: "Missing required fields: email, otp" 
-      });
-    }
-
     const user = await User.findOne({ email });
 
     if (!user) {
       return res.status(400).json({ message: "User not found" });
     }
-    
-    console.log(`Verifying OTP for ${email}: received=${otp}, stored=${user.otp}`);
-    
     if (user.otp !== otp) {
       return res.status(400).json({ message: "Invalid OTP" });
     }
-    
     if (user.otpExpiry < new Date()) {
       return res.status(400).json({ message: "OTP expired" });
     }
@@ -131,35 +100,26 @@ exports.verifyOTP = async (req, res) => {
     user.otpExpiry = undefined;
     await user.save();
 
+    // Session-based authentication (commented out for JWT)
+    // req.session.user = formatUser(user);
+
+    // JWT-based authentication with httpOnly cookie
     const token = generateToken(formatUser(user));
-    console.log(`OTP verified for ${email}`);
-    
     res
-      .cookie("token", token, authCookieOptions)
-      .json({ 
-        message: "Login successful", 
-        user: formatUser(user) 
-      });
+      .cookie("token", token, {
+        ...authCookieOptions,
+      })
+      .json({ message: "Login successful", user: formatUser(user) });
   } catch (error) {
-    console.error("verifyOTP error:", error.message);
-    res.status(500).json({ 
-      message: "Error verifying OTP", 
-      error: error.message 
-    });
+    res
+      .status(500)
+      .json({ message: "Error verifying OTP", error: error.message });
   }
 };
 
 exports.resendOTP = async (req, res) => {
   try {
-    console.log("resendOTP request received");
     const { email } = req.body;
-
-    if (!email) {
-      return res.status(400).json({ 
-        message: "Missing required field: email" 
-      });
-    }
-
     const user = await User.findOne({ email });
 
     if (!user) {
@@ -171,42 +131,25 @@ exports.resendOTP = async (req, res) => {
     user.otpExpiry = new Date(Date.now() + OTP_EXPIRY_MS);
     await user.save();
 
-    sendOtpEmail(email, otp, "OTP Verification").catch(err =>
-      console.error("Email send failed:", err.message)
-    );
-
-    console.log(`OTP resent for ${email}, OTP: ${otp}`);
-
-    res.json({ 
-      message: "OTP resent successfully. Please check your email.",
-      otp: otp // TEMPORARY: Return OTP for testing (remove in production)
-    });
+    await sendOtpEmail(email, otp, "OTP Verification");
+    res.json({ message: "OTP resent successfully. Please check your email." });
   } catch (error) {
-    console.error("resendOTP error:", error.message);
-    res.status(500).json({ 
-      message: "Error resending OTP", 
-      error: error.message 
-    });
+    res
+      .status(500)
+      .json({ message: "Error resending OTP", error: error.message });
   }
 };
 
 exports.login = async (req, res) => {
   try {
-    console.log("login request received for:", req.body.email);
     const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ 
-        message: "Missing required fields: email, password" 
-      });
-    }
 
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(400).json({ 
-        message: "User not found. Please Sign Up." 
-      });
+      return res
+        .status(400)
+        .json({ message: "User not found. Please Sign Up." });
     }
 
     const isPasswordMatch = await user.comparePassword(password);
@@ -214,34 +157,42 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: "Incorrect password" });
     }
 
+    // Session-based check (commented out for JWT)
+    // if (req.session?.user?.id === user._id.toString()) {
+    //   return res.json({
+    //     message: "Already logged in",
+    //     user: formatUser(user),
+    //     requiresOTP: false,
+    //   });
+    // }
+
     const otp = generateOTP();
     user.otp = otp;
     user.otpExpiry = new Date(Date.now() + OTP_EXPIRY_MS);
     await user.save();
 
-    console.log(`Login OTP for ${email}: ${otp}`);
-    
-    sendOtpEmail(email, otp, "Login OTP Verification").catch(err =>
-      console.error("Email send failed:", err.message)
-    );
-
+    await sendOtpEmail(email, otp, "Login OTP Verification");
     res.json({
       message: "OTP sent to your email. Please verify to login.",
       requiresOTP: true,
-      otp: otp // TEMPORARY: Return OTP for testing (remove in production)
     });
   } catch (error) {
-    console.error("login error:", error.message);
-    res.status(500).json({ 
-      message: "Error logging in", 
-      error: error.message 
-    });
+    res.status(500).json({ message: "Error logging in", error: error.message });
   }
 };
 
 exports.logout = (req, res) => {
-  console.log("logout request received");
-  
+  // Session-based logout (commented out for JWT)
+  // req.session.destroy((err) => {
+  //   if (err) {
+  //     return res
+  //       .status(500)
+  //       .json({ message: "Error logging out", error: err.message });
+  //   }
+  //   res.json({ message: "Logout successful" });
+  // });
+
+  // JWT-based logout with httpOnly cookie (server clears token)
   res
     .clearCookie("token", {
       httpOnly: true,
@@ -252,6 +203,14 @@ exports.logout = (req, res) => {
 };
 
 exports.getCurrentUser = (req, res) => {
+  // Session-based (commented out for JWT)
+  // const currentUser = req.session?.user;
+  // if (!currentUser) {
+  //   return res.status(200).json({ user: null });
+  // }
+  // res.json({ user: currentUser });
+
+  // JWT-based - user is attached by middleware
   const currentUser = req.user;
   if (!currentUser) {
     return res.status(200).json({ user: null });
