@@ -6,10 +6,10 @@ The application provides secure user authentication, transaction management, fin
 
 ## Live Demo
 
-**Live Application:** https://trackex-beta.vercel.app/
+- **Application:** https://trackex-beta.vercel.app/
+- **Repository:** https://github.com/Bhagya-311205/Expense_Tracker
 
-**Repository:** https://github.com/Bhagya-311205/Expense_Tracker
-
+> **Note:** The deployed backend runs on Render, where SMTP connections are restricted. Therefore, OTPs are not sent via email in the production environment. Instead, the generated OTP is printed in the Render backend logs. To test registration or login, open the backend service logs on Render and use the displayed OTP for verification.
 ---
 
 ## Features
@@ -187,6 +187,25 @@ OTP codes are generated securely and expire after **1 minute**. Authentication t
 
 ---
 
+### OTP Verification
+
+OTP verification is used during registration and login. OTPs are generated securely and expire after one minute.
+
+Due to SMTP restrictions on Render, the production deployment does not send OTPs through email. The generated OTP is instead printed to the backend console.
+
+To retrieve the OTP on the live deployment:
+
+1. Open the TrackEx application.
+2. Register or log in with your credentials.
+3. Open the deployed backend service in Render.
+4. Go to the **Logs** section.
+5. Find the generated OTP in the backend console output.
+6. Enter the OTP in the application to complete verification.
+
+For local development, SMTP-based email delivery can be configured using the email environment variables.
+
+---
+
 ## Transaction Flow
 
 ```text
@@ -309,8 +328,8 @@ JWT_SECRET=your_strong_jwt_secret
 
 FRONTEND_URL=http://localhost:5173
 
-EMAIL_USER=your_email
-EMAIL_PASS=your_email_password_or_app_password
+| `EMAIL_USER` | Email account for SMTP delivery | Local SMTP only |
+| `EMAIL_PASS` | Email password/app password | Local SMTP only |
 ```
 
 For production, configure the appropriate frontend URL and authentication settings.
