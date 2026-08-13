@@ -1,20 +1,20 @@
-# TrackEx — Expense Tracker
+#  TrackEx — Expense Tracker
 
 **TrackEx** is a full-stack personal finance management application designed to help users record, organize, and analyze their income and expenses through a centralized dashboard.
 
 The application provides secure user authentication, transaction management, financial summaries, category-wise analytics, and receipt management. It is built with **React, Node.js, Express, MongoDB, and JWT-based authentication**, with separate frontend and backend deployments.
 
-## Live Demo
+##  Live Demo
 
-- **Application:** https://trackex-beta.vercel.app/
-- **Repository:** https://github.com/Bhagya-311205/Expense_Tracker
+**Live Application:** [https://trackex-beta.vercel.app/](https://trackex-beta.vercel.app/)
 
-> **Note:** The deployed backend runs on Render, where SMTP connections are restricted. Therefore, OTPs are not sent via email in the production environment. Instead, the generated OTP is printed in the Render backend logs. To test registration or login, open the backend service logs on Render and use the displayed OTP for verification.
+**Repository:** [https://github.com/Bhagya-311205/Expense\_Tracker](https://github.com/Bhagya-311205/Expense_Tracker)
+
 ---
 
-## Features
+##  Features
 
-### Authentication & Security
+###  Authentication & Security
 
 - User registration with **email OTP verification**
 - Secure login using email and password
@@ -28,7 +28,7 @@ The application provides secure user authentication, transaction management, fin
 - CORS configuration for frontend-backend communication
 - Secure production cookie configuration
 
-### Transaction Management
+###  Transaction Management
 
 - Add income and expense transactions
 - Categorize transactions
@@ -41,7 +41,7 @@ The application provides secure user authentication, transaction management, fin
 - View individual transaction details
 - Automatic validation for transaction type and amount
 
-### Financial Dashboard
+###  Financial Dashboard
 
 The application provides an overview of financial activity through:
 
@@ -55,7 +55,7 @@ The application provides an overview of financial activity through:
 
 This enables users to quickly understand their spending patterns and overall financial position.
 
-### Receipt Management
+###  Receipt Management
 
 - Upload receipts while creating transactions
 - Attach multiple receipts to a transaction
@@ -69,9 +69,9 @@ Using GridFS keeps receipt storage within the MongoDB infrastructure and avoids 
 
 ---
 
-## System Architecture
+## ️ System Architecture
 
-```text
+```
                          ┌──────────────────────┐
                          │      React UI        │
                          │   Vite + MUI +       │
@@ -99,55 +99,56 @@ Using GridFS keeps receipt storage within the MongoDB infrastructure and avoids 
                              │   GridFS    │
                              │   Receipts  │
                              └─────────────┘
+
 ```
 
 ---
 
-## Tech Stack
+## ️ Tech Stack
 
 ### Frontend
 
-| Technology | Purpose |
-|---|---|
-| **React 19** | User interface |
-| **Vite** | Frontend build tool |
-| **React Router** | Client-side routing |
-| **Material UI** | UI components |
-| **MUI X Data Grid** | Transaction data tables |
-| **MUI X Charts** | Financial visualization |
-| **Tailwind CSS** | Styling and responsive layouts |
-| **Axios** | REST API communication |
-| **Sonner** | User notifications |
+| TechnologyPurpose   |                                |
+| ------------------- | ------------------------------ |
+| **React 19**        | User interface                 |
+| **Vite**            | Frontend build tool            |
+| **React Router**    | Client-side routing            |
+| **Material UI**     | UI components                  |
+| **MUI X Data Grid** | Transaction data tables        |
+| **MUI X Charts**    | Financial visualization        |
+| **Tailwind CSS**    | Styling and responsive layouts |
+| **Axios**           | REST API communication         |
+| **Sonner**          | User notifications             |
 
 The frontend dependencies and build configuration are defined in `frontend/package.json`.
 
 ### Backend
 
-| Technology | Purpose |
-|---|---|
-| **Node.js** | Server-side runtime |
-| **Express.js** | REST API framework |
-| **MongoDB Atlas** | Cloud database |
-| **Mongoose** | MongoDB ODM |
-| **JWT** | Authentication |
-| **bcrypt** | Password hashing |
-| **Multer** | Multipart/file upload handling |
-| **MongoDB GridFS** | Receipt storage |
-| **Nodemailer** | OTP email delivery |
-| **CORS** | Cross-origin API access |
-| **dotenv** | Environment configuration |
+| TechnologyPurpose  |                                |
+| ------------------ | ------------------------------ |
+| **Node.js**        | Server-side runtime            |
+| **Express.js**     | REST API framework             |
+| **MongoDB Atlas**  | Cloud database                 |
+| **Mongoose**       | MongoDB ODM                    |
+| **JWT**            | Authentication                 |
+| **bcrypt**         | Password hashing               |
+| **Multer**         | Multipart/file upload handling |
+| **MongoDB GridFS** | Receipt storage                |
+| **Nodemailer**     | OTP email delivery             |
+| **CORS**           | Cross-origin API access        |
+| **dotenv**         | Environment configuration      |
 
 The backend is organized into controllers, routes, middleware, models, and configuration modules.
 
 ---
 
-## Authentication Flow
+##  Authentication Flow
 
 TrackEx uses a two-step authentication process.
 
 ### Registration
 
-```text
+```
 User enters details
         ↓
 Account created
@@ -163,11 +164,12 @@ Account verified
 JWT generated
         ↓
 JWT stored in HTTP-only cookie
+
 ```
 
 ### Login
 
-```text
+```
 Email + Password
        ↓
 Password verification
@@ -181,34 +183,16 @@ OTP verification
 JWT authentication cookie
        ↓
 Authenticated session
+
 ```
 
 OTP codes are generated securely and expire after **1 minute**. Authentication tokens are configured using HTTP-only cookies, with secure cross-site settings enabled for production deployments.
 
 ---
 
-### OTP Verification
+##  Transaction Flow
 
-OTP verification is used during registration and login. OTPs are generated securely and expire after one minute.
-
-Due to SMTP restrictions on Render, the production deployment does not send OTPs through email. The generated OTP is instead printed to the backend console.
-
-To retrieve the OTP on the live deployment:
-
-1. Open the TrackEx application.
-2. Register or log in with your credentials.
-3. Open the deployed backend service in Render.
-4. Go to the **Logs** section.
-5. Find the generated OTP in the backend console output.
-6. Enter the OTP in the application to complete verification.
-
-For local development, SMTP-based email delivery can be configured using the email environment variables.
-
----
-
-## Transaction Flow
-
-```text
+```
 User creates transaction
           ↓
 Authentication middleware
@@ -222,13 +206,14 @@ Receipt → MongoDB GridFS
 Transaction → MongoDB
           ↓
 Dashboard / Analytics updated
+
 ```
 
 Every transaction is associated with the authenticated user's ID, ensuring that users can only access and modify their own financial records.
 
 ---
 
-## Financial Analytics
+##  Financial Analytics
 
 The backend calculates key financial indicators directly from the user's transactions:
 
@@ -242,9 +227,9 @@ These aggregated metrics are exposed through the transaction summary API and con
 
 ---
 
-## Project Structure
+##  Project Structure
 
-```text
+```
 Expense_Tracker/
 │
 ├── backend/
@@ -281,11 +266,12 @@ Expense_Tracker/
 ├── .gitignore
 ├── package.json
 └── README.md
+
 ```
 
 ---
 
-## Getting Started
+##  Getting Started
 
 ### Prerequisites
 
@@ -300,25 +286,27 @@ Make sure the following are installed:
 
 ### 1. Clone the Repository
 
-```bash
+```
 git clone https://github.com/Bhagya-311205/Expense_Tracker.git
 cd Expense_Tracker
+
 ```
 
 ---
 
 ### 2. Configure the Backend
 
-```bash
+```
 cd backend
 npm install
+
 ```
 
 Create the required environment configuration.
 
 Example:
 
-```env
+```
 NODE_ENV=development
 PORT=3000
 
@@ -328,8 +316,9 @@ JWT_SECRET=your_strong_jwt_secret
 
 FRONTEND_URL=http://localhost:5173
 
-| `EMAIL_USER` | Email account for SMTP delivery | Local SMTP only |
-| `EMAIL_PASS` | Email password/app password | Local SMTP only |
+EMAIL_USER=your_email
+EMAIL_PASS=your_email_password_or_app_password
+
 ```
 
 For production, configure the appropriate frontend URL and authentication settings.
@@ -338,27 +327,31 @@ For production, configure the appropriate frontend URL and authentication settin
 
 ### 3. Start the Backend
 
-```bash
+```
 npm run dev
+
 ```
 
 The backend will run on:
 
-```text
+```
 http://localhost:3000
+
 ```
 
 A health-check endpoint is available at:
 
-```text
+```
 /api/health
+
 ```
 
 The backend exposes authentication and transaction APIs under:
 
-```text
+```
 /api/auth
 /api/transactions
+
 ```
 
 The Express application configures CORS, JSON parsing, authentication routes, transaction routes, and health checks.
@@ -369,28 +362,31 @@ The Express application configures CORS, JSON parsing, authentication routes, tr
 
 Open another terminal:
 
-```bash
+```
 cd frontend
 npm install
+
 ```
 
 Create a frontend environment file:
 
-```env
+```
 VITE_API_URL=http://localhost:3000/api
+
 ```
 
 Start the development server:
 
-```bash
+```
 npm run dev
+
 ```
 
 The frontend uses Vite and exposes development, production build, linting, and preview scripts.
 
 ---
 
-## Deployment
+##  Deployment
 
 The project is structured for independent frontend and backend deployment.
 
@@ -398,45 +394,49 @@ The project is structured for independent frontend and backend deployment.
 
 The frontend can be deployed on **Vercel** with:
 
-```text
+```
 Root Directory: frontend
 Build Command: npm run build
 Output Directory: dist
+
 ```
 
 Set:
 
-```env
+```
 VITE_API_URL=https://your-backend.onrender.com/api
+
 ```
 
 ### Backend — Render
 
 The backend can be deployed on **Render** with:
 
-```text
+```
 Root Directory: backend
 Build Command: npm install
 Start Command: npm start
 Health Check: /api/health
+
 ```
 
 Configure:
 
-```env
+```
 NODE_ENV=production
 MONGODB_URI=your_atlas_connection_string
 JWT_SECRET=your_strong_secret
 FRONTEND_URL=https://your-frontend.vercel.app
 EMAIL_USER=your_email
 EMAIL_PASS=your_email_password_or_app_password
+
 ```
 
 The repository is already structured around a Vercel frontend, Render backend, and MongoDB Atlas database.
 
 ---
 
-## MongoDB Atlas & GridFS
+## ️ MongoDB Atlas & GridFS
 
 MongoDB Atlas is used as the primary data layer.
 
@@ -444,7 +444,7 @@ In addition to storing user and transaction data, **MongoDB GridFS** is used for
 
 ### Receipt upload process
 
-```text
+```
 Receipt selected
       ↓
 Multipart request
@@ -456,6 +456,7 @@ GridFS upload stream
 MongoDB stores receipt
       ↓
 File ID stored with transaction
+
 ```
 
 When a receipt is downloaded, the backend retrieves the corresponding GridFS file and streams it back to the authenticated user.
@@ -464,36 +465,36 @@ This approach avoids relying on ephemeral local storage during cloud deployment.
 
 ---
 
-## API Overview
+##  API Overview
 
 ### Authentication
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/auth/signup` | Register a new user |
-| `POST` | `/api/auth/verify-otp` | Verify registration/login OTP |
-| `POST` | `/api/auth/resend-otp` | Resend OTP |
-| `POST` | `/api/auth/login` | Initiate login |
-| `POST` | `/api/auth/logout` | Logout user |
-| `GET` | `/api/auth/me` | Get authenticated user |
+| MethodEndpointDescription |                        |                               |
+| ------------------------- | ---------------------- | ----------------------------- |
+| `POST`                    | `/api/auth/signup`     | Register a new user           |
+| `POST`                    | `/api/auth/verify-otp` | Verify registration/login OTP |
+| `POST`                    | `/api/auth/resend-otp` | Resend OTP                    |
+| `POST`                    | `/api/auth/login`      | Initiate login                |
+| `POST`                    | `/api/auth/logout`     | Logout user                   |
+| `GET`                     | `/api/auth/me`         | Get authenticated user        |
 
 ### Transactions
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/transactions` | Get user's transactions |
-| `GET` | `/api/transactions/:id` | Get a transaction |
-| `POST` | `/api/transactions` | Create transaction |
-| `PUT` | `/api/transactions/:id` | Update transaction |
-| `DELETE` | `/api/transactions/:id` | Delete transaction |
-| `GET` | `/api/transactions/summary` | Get financial summary |
-| `GET` | `/api/transactions/:id/receipts/:receiptId` | Download receipt |
+| MethodEndpointDescription |                                             |                         |
+| ------------------------- | ------------------------------------------- | ----------------------- |
+| `GET`                     | `/api/transactions`                         | Get user's transactions |
+| `GET`                     | `/api/transactions/:id`                     | Get a transaction       |
+| `POST`                    | `/api/transactions`                         | Create transaction      |
+| `PUT`                     | `/api/transactions/:id`                     | Update transaction      |
+| `DELETE`                  | `/api/transactions/:id`                     | Delete transaction      |
+| `GET`                     | `/api/transactions/summary`                 | Get financial summary   |
+| `GET`                     | `/api/transactions/:id/receipts/:receiptId` | Download receipt        |
 
 > Endpoint names may vary slightly with future route changes; refer to the corresponding route files for the authoritative implementation.
 
 ---
 
-## Key Engineering Highlights
+##  Key Engineering Highlights
 
 ### Secure Authentication
 
@@ -526,7 +527,7 @@ The frontend combines React with Material UI, MUI Data Grid, MUI Charts, Tailwin
 
 ---
 
-## Security Considerations
+##  Security Considerations
 
 - Passwords are hashed using bcrypt.
 - Authentication uses JWTs.
@@ -539,7 +540,7 @@ The frontend combines React with Material UI, MUI Data Grid, MUI Charts, Tailwin
 
 ---
 
-## Future Improvements
+##  Future Improvements
 
 Potential enhancements include:
 
@@ -558,16 +559,16 @@ Potential enhancements include:
 
 ---
 
-## License
+##  License
 
 This project is currently available for educational and portfolio purposes.
 
 ---
 
-## Author
+## ‍ Author
 
 **Bhagya Agrawal**
 
-GitHub: https://github.com/Bhagya-311205
+GitHub: [https://github.com/Bhagya-311205](https://github.com/Bhagya-311205)
 
 ---
