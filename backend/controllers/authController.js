@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const User = require("../models/User");
-const { transporter } = require("../config/email");
+// const { transporter } = require("../config/email");
+const { sendOtpEmail } = require("../config/email");
 const { generateToken } = require("../middleware/jwtAuthMiddleware");
 
 const OTP_EXPIRY_MS = 60 * 1000;
@@ -20,16 +21,16 @@ const formatUser = (user) => ({
   name: user.name,
 });
 
-const sendOtpEmail = async (email, otp, label = "OTP Verification") => {
-  await transporter.sendMail({
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: `TrackEx: ${label}`,
-    html: `<div><p>Your One-Time Password (OTP) is: <b>${otp}</b></p>
-           <p>This OTP is valid for 1 minute. If you did not request this, please ignore this email.</p>
-           <p>Thank you,<br/>TrackEx Team</p></div>`,
-  });
-};
+// const sendOtpEmail = async (email, otp, label = "OTP Verification") => {
+//   await transporter.sendMail({
+//     from: process.env.EMAIL_USER,
+//     to: email,
+//     subject: `TrackEx: ${label}`,
+//     html: `<div><p>Your One-Time Password (OTP) is: <b>${otp}</b></p>
+//            <p>This OTP is valid for 1 minute. If you did not request this, please ignore this email.</p>
+//            <p>Thank you,<br/>TrackEx Team</p></div>`,
+//   });
+// };
 
 exports.signUp = async (req, res) => {
   try {

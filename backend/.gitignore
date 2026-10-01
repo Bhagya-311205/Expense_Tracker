@@ -16,6 +16,10 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
+# GMail API
+scripts/gmail-credentials.json
+scripts/token.json
+
 # OS
 .DS_Store
 Thumbs.db
